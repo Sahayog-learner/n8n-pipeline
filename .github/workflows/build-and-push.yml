@@ -65,7 +65,7 @@ jobs:
       # 5. Trivy - Container Image Scan
       # ==========================================
       - name: Run Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@ed142fd2c8c1b8b9f4b9b3b7f7e5e5e5e5e5e5e5 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: "${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image_name }}:${{ inputs.image_tag }}"
           format: "table"
