@@ -1,0 +1,267 @@
+{
+  "name": "Devops Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -800,
+        -16
+      ],
+      "id": "575909da-824f-4883-bc1e-0479a127e42a",
+      "name": "When chat message received",
+      "webhookId": "12e857f0-836b-44bb-bdaf-9ba7222633e7"
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a helpful assYou are an AI DevOps request parser.\n\nUnderstand the user's request and return the required structured\nDevOps information.\n\nSupported intents:\n\n- build\n- deploy\n- rollback\n- status\n- remediate\n\nFor now, only build requests will be executed.\n\nFor build requests identify:\n\n- repository\n- branch\n- tag\n- image_name\n\nRules:\n\n- If branch is not specified, use \"main\".\n- If tag is not specified, use \"AUTO\".\n- Never invent a repository.\n- Never invent credentials.\n- Never execute commands.\n- Never access GitHub directly.\n- Never access servers.\n- Never deploy anything.\n\nIf the request is unclear or required information is missing,\nset validation.valid to false and explain the problem in\nvalidation.message.\n\nReturn data matching the required structured output schema.istant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -576,
+        -16
+      ],
+      "id": "94deafa1-7b52-42bb-a8ec-fe996a7ff978",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openrouter/free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        192
+      ],
+      "id": "",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"intent\": {\n      \"type\": \"string\"\n    },\n    \"repository\": {\n      \"type\": \"string\"\n    },\n    \"branch\": {\n      \"type\": \"string\"\n    },\n    \"tag\": {\n      \"type\": \"string\"\n    },\n    \"image_name\": {\n      \"type\": \"string\"\n    },\n    \"environment\": {\n      \"type\": [\"string\", \"null\"]\n    },\n    \"remediation\": {\n      \"type\": \"boolean\"\n    },\n    \"validation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"valid\": {\n          \"type\": \"boolean\"\n        },\n        \"message\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"valid\",\n        \"message\"\n      ]\n    }\n  },\n  \"required\": [\n    \"intent\",\n    \"repository\",\n    \"branch\",\n    \"tag\",\n    \"image_name\",\n    \"environment\",\n    \"remediation\",\n    \"validation\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -400,
+        192
+      ],
+      "id": "a567c9d1-d1f6-46a0-aa37-9ee0091fcea1",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1b688255-f6bd-487b-8e89-f895c07c0b2c",
+              "leftValue": "={{ $json.output.validation.valid }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        -16
+      ],
+      "id": "b2977ad6-7c6a-4b92-bb0a-3ed9fc99b5a1",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5d1c9a16-2595-4bc0-8436-92a4b5e11ce6",
+              "name": "output.intent",
+              "value": "={{ $json.output.intent }}",
+              "type": "string"
+            },
+            {
+              "id": "e1a13cb1-9ac3-4875-b32f-78a9489c03f8",
+              "name": "output.repository",
+              "value": "={{ $json.output.repository }}",
+              "type": "string"
+            },
+            {
+              "id": "c189f03d-9bb5-465d-84db-d86c9527fdbc",
+              "name": "output.branch",
+              "value": "={{ $json.output.branch }}",
+              "type": "string"
+            },
+            {
+              "id": "341f9c1c-f7cc-4bba-ba48-d4a4917bfa2c",
+              "name": "output.tag",
+              "value": "={{ $json.output.tag }}",
+              "type": "string"
+            },
+            {
+              "id": "034d354b-faad-4942-9a9e-f0c2c1caeff7",
+              "name": "output.image_name",
+              "value": "={{ $json.output.image_name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        16,
+        -64
+      ],
+      "id": "894ae731-9d7f-406a-b06b-a2f035fb8578",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": " https://api.github.com/repos/Sahayog-learner/n8n-pipeline/actions/workflows/build-and-push.yml/dispatches",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": ""
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "X-GitHub-Api-Version",
+              "value": "2022-11-28"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"ref\": \"main\",\n  \"inputs\": {\n    \"branch\": \"{{ $json.output.branch }}\",\n    \"image_tag\": \"{{ $json.output.tag }}\",\n    \"image_name\": \"{{ $json.output.image_name }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        -64
+      ],
+      "id": "6a476fa7-2982-4694-881b-1ccca62f8210",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3644845d-1906-4ee2-9197-2d698bad6f7c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "416c9e8a334d9436b318b6e5f1a779d908df6479de770a1be543acd14018e61e"
+  },
+  "nodeGroups": [],
+  "id": "hQsjjBpND1hZkekN",
+  "tags": []
+}
